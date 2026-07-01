@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPU Detail - GPUPrice.bd</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="container">
+    <a href="/" class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      GPUPrice<span>.bd</span>
+    </a>
+    <div class="topbar-right">
+      <a href="/" class="back-link">&larr; Back to Listing</a>
+    </div>
+  </div>
+</div>
+
+<div class="container" id="productContainer">
+  <div class="loading">Loading</div>
+</div>
+
+<script>
+const productId = {{ product_id }};
+
+function formatPrice(n) {
+  return "\u09f3" + Number(n).toLocaleString("en-BD");
+}
+
+function escapeHtml(text) {
+  const d = document.createElement("div");
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+const SELLER_COLORS = {
+  techlandbd: "seller-techlandbd",
+  startech: "seller-startech",
+  potakait: "seller-potakait",
+  ultratech: "seller-ultratech",
+  ucc: "seller-ucc",
+  creatus: "seller-creatus",
+  bengalpc: "seller-bengalpc",
+  pcbstore: "seller-pcbstore",
+};
+
+async function loadProduct() {
+  try {
+    const resp = await fetch(`/api/products/${productId}`);
+    const p = await resp.json();
+
+    document.title = p.name + " - GPUPrice.bd";
+
+    const discount = p.original_price && p.original_price > p.current_price
+      ? Math.round((1 - p.current_price / p.original_price) * 100)
+      : 0;
+
+    const sellerClass = SELLER_COLORS[p.seller_slug] || "seller-techlandbd";
+
+    const specRows = [
+      { label: "Brand", value: p.brand },
+      { label: "Chipset", value: p.chipset },
+      { label: "Memory", value: p.memory },
+      { label: "Memory Type", value: p.memory_type },
+      { label: "Color", value: p.color },
+      { label: "Clock Speed", value: p.clock_speed },
+      { label: "Boost Clock", value: p.boost_clock },
+      { label: "Interface", value: p.interface },
+      { label: "TDP", value: p.tdp },
+      { label: "Length", value: p.length_mm },
+      { label: "Power Connectors", value: p.power_connectors },
+      { label: "Cooling", value: p.cooling },
+    ].filter(r => r.value);
+
+    const html = `
+    <div class="product-detail">
+      <div class="detail-header">
+        <div class="detail-image">
+          <img src="${escapeHtml(p.image_url || '')}" alt="" onerror="this.src='/static/no-image.png'">
+        </div>
+        <div class="detail-info">
+          <h1>${escapeHtml(p.name)}</h1>
+          <div class="detail-seller">
+            Sold by: <span class="seller-badge ${sellerClass}">${escapeHtml(p.seller)}</span>
+          </div>
+          <div class="detail-pricing">
+            <span class="detail-price">${p.current_price ? formatPrice(p.current_price) : 'N/A'}</span>
+            ${p.original_price && p.original_price > p.current_price ? `
+              <span class="detail-old-price">${formatPrice(p.original_price)}</span>
+              <span class="detail-discount">-${discount}%</span>
+            ` : ''}
+          </div>
+          <div class="detail-stock">
+            <span class="stock-${p.in_stock ? 'in' : 'out'}">${p.in_stock ? 'In Stock' : 'Out of Stock'}</span>
+          </div>
+          <div class="detail-actions">
+            <a href="${escapeHtml(p.product_url)}" target="_blank" class="buy-btn">View on ${escapeHtml(p.seller)}</a>
+            ${p.model_slug ? `<a href="/model/${encodeURIComponent(p.model_slug)}" class="compare-btn">All Sellers</a>` : ''}
+          </div>
+        </div>
+      </div>
+
+      ${specRows.length ? `
+      <div class="detail-section">
+        <h2>Specifications</h2>
+        <table class="spec-table">
+          ${specRows.map(r => `<tr><td class="spec-label">${r.label}</td><td class="spec-value">${escapeHtml(r.value || '')}</td></tr>`).join("")}
+        </table>
+      </div>` : ''}
+
+      <div class="detail-section">
+        <h2>Price History at ${escapeHtml(p.seller)}</h2>
+        <div class="price-history">
+          <table class="history-table">
+            <thead>
+              <tr><th>Date</th><th>Price</th><th>Original Price</th></tr>
+            </thead>
+            <tbody>
+              ${p.price_history && p.price_history.length ? p.price_history.map(ph => `
+                <tr>
+                  <td>${ph.recorded_at ? new Date(ph.recorded_at).toLocaleDateString() : '-'}</td>
+                  <td>${formatPrice(ph.price)}</td>
+                  <td>${ph.original_price ? formatPrice(ph.original_price) : '-'}</td>
+                </tr>
+              `).join("") : '<tr><td colspan="3">No price history available</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+
+    document.getElementById("productContainer").innerHTML = html;
+  } catch (e) {
+    document.getElementById("productContainer").innerHTML = '<div class="error">Failed to load product details.</div>';
+  }
+}
+
+loadProduct();
+</script>
+</body>
+</html>

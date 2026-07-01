@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Project specific
+gpu_prices/gpu_prices.db
+gpu_prices/*.db
+gpu_prices/scrapers/*.db
+
+# Debug / temp files
+gpu_prices/_check*.py
+gpu_prices/_*.py
+gpu_prices/debug_*.py
+gpu_prices/debug_*.html
+gpu_prices/inspect_page*.py
+gpu_prices/test_page.html
+*.txt
+
+# Environment
+.env

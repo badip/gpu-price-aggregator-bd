@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPU Detail - GPUPrice.bd</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="container">
+    <a href="/" class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      GPUPrice<span>.bd</span>
+    </a>
+    <div class="topbar-right">
+      <a href="/" class="back-link">&larr; Back to Listing</a>
+    </div>
+  </div>
+</div>
+
+<div class="container" id="modelContainer">
+  <div class="loading">Loading</div>
+</div>
+
+<script>
+const modelSlug = "{{ model_slug }}";
+
+function formatPrice(n) {
+  return "\u09f3" + Number(n).toLocaleString("en-BD");
+}
+
+function escapeHtml(text) {
+  const d = document.createElement("div");
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+const SELLER_COLORS = {
+  techlandbd: "seller-techlandbd",
+  startech: "seller-startech",
+  potakait: "seller-potakait",
+  ultratech: "seller-ultratech",
+  ucc: "seller-ucc",
+  creatus: "seller-creatus",
+  bengalpc: "seller-bengalpc",
+  pcbstore: "seller-pcbstore",
+};
+
+async function loadModel() {
+  try {
+    const resp = await fetch(`/api/models/${encodeURIComponent(modelSlug)}`);
+    if (!resp.ok) { document.getElementById("modelContainer").innerHTML = '<div class="error">Model not found</div>'; return; }
+    const m = await resp.json();
+
+    document.title = m.name + " - GPUPrice.bd";
+
+    const bestPrice = m.sellers && m.sellers.length ? m.sellers[0].current_price : null;
+    const bestOrig = m.sellers && m.sellers.length ? m.sellers[0].original_price : null;
+    const discount = bestOrig && bestOrig > bestPrice
+      ? Math.round((1 - bestPrice / bestOrig) * 100) : 0;
+
+    const specRows = [
+      { label: "Brand", value: m.brand },
+      { label: "Chipset", value: m.chipset },
+      { label: "Memory", value: m.memory },
+      { label: "Memory Type", value: m.memory_type },
+      { label: "Color", value: m.color },
+      { label: "Clock Speed", value: m.clock_speed },
+      { label: "Boost Clock", value: m.boost_clock },
+      { label: "Interface", value: m.interface },
+      { label: "TDP", value: m.tdp },
+      { label: "Length", value: m.length_mm },
+      { label: "Power Connectors", value: m.power_connectors },
+      { label: "Cooling", value: m.cooling },
+    ].filter(r => r.value);
+
+    const offersHtml = (m.sellers || []).map(s => {
+      const cls = SELLER_COLORS[s.seller_slug] || "seller-techlandbd";
+      const sd = s.original_price && s.original_price > s.current_price
+        ? Math.round((1 - s.current_price / s.original_price) * 100) : 0;
+      return `<div class="seller-offer">
+        <div class="offer-info">
+          <span class="seller-badge ${cls}">${escapeHtml(s.seller)}</span>
+          <div class="offer-name">${escapeHtml(s.name)}</div>
+        </div>
+        <div class="offer-pricing">
+          <span class="offer-price">${s.current_price ? formatPrice(s.current_price) : 'N/A'}</span>
+          ${sd ? `<span class="offer-old">${formatPrice(s.original_price)}</span><span class="offer-discount">-${sd}%</span>` : ''}
+        </div>
+        <div class="offer-stock">
+          <span class="stock-${s.in_stock ? 'in' : 'out'}">${s.in_stock ? 'In Stock' : 'Out of Stock'}</span>
+        </div>
+        <div class="offer-action">
+          <a href="${escapeHtml(s.product_url)}" target="_blank" class="buy-btn-sm">Buy</a>
+          <a href="/product/${s.product_id}" class="detail-btn-sm">Price History</a>
+        </div>
+      </div>`;
+    }).join("");
+
+    const html = `
+    <div class="model-detail">
+      <div class="detail-header">
+        <div class="detail-image">
+          <img src="${escapeHtml(m.image_url || '')}" alt="" onerror="this.src='/static/no-image.png'">
+        </div>
+        <div class="detail-info">
+          <h1>${escapeHtml(m.name)}</h1>
+          <div class="detail-pricing">
+            <span class="detail-price">${bestPrice ? formatPrice(bestPrice) : 'N/A'}</span>
+            ${discount ? `<span class="detail-old-price">${formatPrice(bestOrig)}</span><span class="detail-discount">-${discount}%</span>` : ''}
+          </div>
+          <div class="detail-stats">
+            <span class="stat">${m.sellers ? m.sellers.length : 0} seller${m.sellers && m.sellers.length !== 1 ? 's' : ''}</span>
+            ${m.sellers && m.sellers.some(s => s.in_stock) ? '<span class="stat stock-in">In Stock</span>' : '<span class="stat stock-out">Out of Stock</span>'}
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h2>Available Sellers</h2>
+        <div class="seller-offers">
+          ${offersHtml || '<p>No sellers currently listing this GPU.</p>'}
+        </div>
+      </div>
+
+      ${specRows.length ? `
+      <div class="detail-section">
+        <h2>Specifications</h2>
+        <table class="spec-table">
+          ${specRows.map(r => `<tr><td class="spec-label">${r.label}</td><td class="spec-value">${escapeHtml(r.value || '')}</td></tr>`).join("")}
+        </table>
+      </div>` : ''}
+
+      <div class="detail-section">
+        <h2>Price Comparison</h2>
+        <table class="comparison-table">
+          <thead>
+            <tr><th>Seller</th><th>Product</th><th>Price</th><th>Stock</th></tr>
+          </thead>
+          <tbody>
+            ${(m.sellers || []).map(s => {
+              const cls = SELLER_COLORS[s.seller_slug] || "seller-techlandbd";
+              return `<tr>
+                <td><span class="seller-badge ${cls}">${escapeHtml(s.seller)}</span></td>
+                <td class="cmp-name">${escapeHtml(s.name)}</td>
+                <td class="cmp-price">${s.current_price ? formatPrice(s.current_price) : 'N/A'}</td>
+                <td><span class="stock-${s.in_stock ? 'in' : 'out'}">${s.in_stock ? 'In Stock' : 'Out of Stock'}</span></td>
+              </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+    document.getElementById("modelContainer").innerHTML = html;
+  } catch (e) {
+    document.getElementById("modelContainer").innerHTML = '<div class="error">Failed to load model details.</div>';
+  }
+}
+
+loadModel();
+</script>
+</body>
+</html>
