@@ -186,7 +186,7 @@ def _extract_woocommerce_product(item, config):
             elif len(nums) == 1:
                 current_price = nums[0]
 
-        in_stock = True
+        in_stock = current_price > 0
         stock_el = item.select_one(config.get('stock_selector', '.stock'))
         if stock_el:
             txt = stock_el.get_text(strip=True).lower()
@@ -328,7 +328,7 @@ async def _scrape_pcbstore_page(client, url):
                     else:
                         current_price = nums[0]
 
-            in_stock = True
+            in_stock = current_price > 0
             txt = item.get_text(strip=True).lower()
             if 'out of stock' in txt and 'in stock' not in txt:
                 in_stock = False

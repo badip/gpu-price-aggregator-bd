@@ -33,3 +33,17 @@ gpu_prices/test_page.html
 
 # Environment
 .env
+
+# Ruflo / Claude Flow agent artifacts
+.agents/
+.claude-flow/agents/
+.claude-flow/daemon*
+.claude-flow/swarm/
+.claude-flow/metrics/swarm-activity.json
+.claude-flow/metrics/codebase-map.json
+.claude-flow/metrics/consolidation.json
+.claude-flow/metrics/performance.json
+.claude-flow/metrics/security-audit.json
+.claude-flow/metrics/test-gaps.json
+.swarm/
+skills-lock.json

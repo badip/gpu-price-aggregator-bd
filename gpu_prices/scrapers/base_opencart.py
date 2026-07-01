@@ -123,7 +123,7 @@ class OpenCartScraper:
                     elif len(nums) == 1:
                         current_price = nums[0]
 
-            in_stock = True
+            in_stock = current_price > 0
             if config.get('stock_selector'):
                 stock_el = item.select_one(config['stock_selector'])
                 if stock_el:

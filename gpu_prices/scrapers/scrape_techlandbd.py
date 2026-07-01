@@ -117,7 +117,7 @@ def extract_product_from_article(article):
                 original_price = nums[0]
 
         stock_p = article.find('p', class_=lambda c: c and 'text-green' in (c if c else ''))
-        in_stock = True
+        in_stock = current_price > 0
         if stock_p and 'out of stock' in stock_p.get_text(strip=True).lower():
             in_stock = False
 

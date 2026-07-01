@@ -1,7 +1,10 @@
-import os, re
+import os, sys, re
 from datetime import datetime, timezone
 from typing import Optional
 from collections import defaultdict
+_parent = os.path.dirname(os.path.abspath(__file__))
+if _parent not in sys.path:
+    sys.path.insert(0, _parent)
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -96,6 +99,8 @@ def list_products(
             query = query.filter(lp.c.price <= max_price)
         if in_stock:
             query = query.filter(Product.in_stock == True)
+            query = query.filter(lp.c.price.isnot(None))
+            query = query.filter(lp.c.price > 0)
 
         results = query.all()
 
