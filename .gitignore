@@ -33,6 +33,8 @@ gpu_prices/test_page.html
 
 # Environment
 .env
+claude.md
+CLAUDE.md
 
 # Ruflo / Claude Flow agent artifacts
 .claude/
