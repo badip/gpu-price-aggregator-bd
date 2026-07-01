@@ -35,6 +35,8 @@ gpu_prices/test_page.html
 .env
 
 # Ruflo / Claude Flow agent artifacts
+.claude/
+.claude-flow/
 .agents/
 .claude-flow/agents/
 .claude-flow/daemon*
